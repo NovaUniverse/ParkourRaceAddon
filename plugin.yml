@@ -1,0 +1,7 @@
+name: ParkourRaceExtension
+main: net.novauniverse.games.parkourrace.addon.ParkourRaceAddon
+description: Novauniverse ParkourRace Extension
+version: 1.0
+depend: [NovaCore, NovaCoreGameEngine, ParkourRace]
+softdepend: [NovaGamesTarget]
+api-version: 1.13
