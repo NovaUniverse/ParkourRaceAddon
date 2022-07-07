@@ -19,6 +19,7 @@ import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+import org.bukkit.scheduler.BukkitRunnable;
 
 import net.md_5.bungee.api.ChatColor;
 import net.novauniverse.games.parkourrace.NovaParkourRace;
@@ -27,6 +28,8 @@ import net.novauniverse.games.parkourrace.game.event.ParkourRacePlayerCompleteEv
 import net.novauniverse.games.parkourrace.game.event.ParkourRacePlayerCompleteLapEvent;
 import net.zeeraa.novacore.commons.utils.Callback;
 import net.zeeraa.novacore.commons.utils.TextUtils;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.GameManager;
+import net.zeeraa.novacore.spigot.gameengine.module.modules.game.events.GameStartEvent;
 
 public class ParkourRaceAddon extends JavaPlugin implements Listener {
 	private BossBar timerBar;
@@ -40,7 +43,7 @@ public class ParkourRaceAddon extends JavaPlugin implements Listener {
 
 		timerBar = Bukkit.createBossBar(ChatColor.AQUA + "" + ChatColor.BOLD + "Time left: --:--", BarColor.RED, BarStyle.SOLID);
 		timerBar.setProgress(1);
-		timerBar.setVisible(true);
+		timerBar.setVisible(false);
 
 		Bukkit.getServer().getPluginManager().registerEvents(this, this);
 
@@ -57,6 +60,10 @@ public class ParkourRaceAddon extends JavaPlugin implements Listener {
 	}
 
 	public void updatePlayer(Player player) {
+		if (!GameManager.getInstance().getActiveGame().hasStarted()) {
+			return;
+		}
+
 		boolean inGame = false;
 		if (NovaParkourRace.getInstance().getGame().getPlayers().contains(player.getUniqueId())) {
 			inGame = true;
@@ -88,7 +95,7 @@ public class ParkourRaceAddon extends JavaPlugin implements Listener {
 			int laps = NovaParkourRace.getInstance().getGame().getConfig().getLaps();
 			int playerLap = playerData.getLap();
 
-			double p = (double) (playerLap - 1) / (double) laps;
+			double p = (double) playerLap / (double) laps;
 			bar.setProgress(p);
 			bar.setTitle(ChatColor.GREEN + "" + ChatColor.BOLD + "Lap " + playerLap);
 		}
@@ -118,6 +125,17 @@ public class ParkourRaceAddon extends JavaPlugin implements Listener {
 			playerBar.get(uuid).removeAll();
 			playerBar.remove(uuid);
 		}
+	}
+
+	@EventHandler(priority = EventPriority.NORMAL)
+	public void onGameStart(GameStartEvent e) {
+		new BukkitRunnable() {
+			@Override
+			public void run() {
+				timerBar.setVisible(true);
+				Bukkit.getServer().getOnlinePlayers().forEach(player -> updatePlayer(player));
+			}
+		}.runTaskLater(this, 5L);
 	}
 
 	@EventHandler(priority = EventPriority.NORMAL)
